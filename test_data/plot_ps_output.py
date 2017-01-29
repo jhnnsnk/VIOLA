@@ -190,6 +190,7 @@ if __name__ == '__main__':
                 paramset[dim2] = value_j
                 paramset[dim3] = subspace[dim3]
                 ps_id = parameterset.get_unique_id(paramset)
+                print(ps_id)
 
                 A = ANALYSIS[ps_id]
                 
@@ -232,3 +233,4 @@ if __name__ == '__main__':
                  extra_args=['-b:v', '20000k', '-r', '10', '-vcodec', 'mpeg4'],)
 
         plt.close(fig)
+        # plt.show()

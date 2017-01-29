@@ -33,9 +33,9 @@ PSET_DEFAULTS = ps.ParameterSet(dict(
 # define parameterspace to iterate over
 PS = ps.ParameterSpace(PSET_DEFAULTS)
 PS.update(dict(
-    # g = ps.ParameterRange(np.linspace(4., 5., 3)),
+    g = ps.ParameterRange(np.linspace(3., 7., 5)),
     sigma_ex = ps.ParameterRange((np.linspace(0.2, 0.6, 5))),
-    eta = ps.ParameterRange(np.linspace(1., 2., 5)),
+    # eta = ps.ParameterRange(np.linspace(1., 2., 3)),
     
 ))
 
