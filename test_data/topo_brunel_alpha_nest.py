@@ -66,6 +66,9 @@ from matplotlib.patches import Patch
 from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.mplot3d import Axes3D
 
+from NeuroTools.parameters import ParameterSet
+import parameterset # import PSET
+
 random.seed(123456)
 
 
@@ -100,37 +103,53 @@ build time of the network.
 startbuild = time.time()
 
 '''
+Create ParameterSet object for the main simulation parameters. Derived
+parameters should not enter. 
+'''
+# PSET = ParameterSet({})
+
+# Capture command line arguments to determine ParameterSet values
+if len(sys.argv) != 2:
+    PSET = parameterset.PSET_DEFAULTS
+    PSET.ps_id = 'PSET_DEFAULTS'
+    PSET.spike_output_path = os.path.join('out_raw', 'PSET_DEFAULTS')
+else:
+    parameter_set_file = sys.argv[-1]
+    PSET = ParameterSet(parameter_set_file)
+
+
+'''
 Assigning the simulation parameters to variables.
 '''
 
-dt      = 0.1    # Simulation time resolution in ms
-simtime = 1000.  # Simulation time in ms
-transient = 200. # Simulation transient, discarding spikes at times < transient 
+# PSET.dt        = 0.1    # Simulation time resolution in ms
+# PSET.simtime   = 1000.  # Simulation time in ms
+# PSET.transient = 200. # Simulation transient, discarding spikes at times < transient 
 
 '''
 Definition of the parameters crucial for asynchronous irregular firing
 of the neurons.
 '''
 
-g       = 4.5  # ratio inhibitory weight/excitatory weight (before: 5.0)
-eta     = 2.0  # external rate relative to threshold rate
-epsilon = 0.2  # connection probability (before: 0.1)
+# PSET.g       = 4.5  # ratio inhibitory weight/excitatory weight (before: 5.0)
+# PSET.eta     = 2.0  # external rate relative to threshold rate
+# PSET.epsilon = 0.2  # connection probability (before: 0.1)
 
 '''
 Definition of the number of neurons in the network.
 '''
 
-order     = 5000
-NE        = 4*order # number of excitatory neurons
-NI        = 1*order # number of inhibitory neurons
-N_neurons = NE+NI   # number of neurons in total
+# PSET.order = 5000
+NE         = 4*PSET.order # number of excitatory neurons
+NI         = 1*PSET.order # number of inhibitory neurons
+N_neurons  = NE+NI   # number of neurons in total
 
 '''
 Definition of connectivity parameters.
 '''
 
-CE    = int(epsilon*NE) # number of excitatory synapses per neuron
-CI    = int(epsilon*NI) # number of inhibitory synapses per neuron
+CE    = int(PSET.epsilon*NE) # number of excitatory synapses per neuron
+CI    = int(PSET.epsilon*NI) # number of inhibitory synapses per neuron
 C_tot = int(CI+CE)      # total number of synapses per neuron
 
 '''
@@ -140,23 +159,25 @@ The synaptic currents are normalized such that the amplitude of the
 PSP is J.
 '''
 
-tauSyn = 0.5     # synaptic time constant in ms
-tauMem = 20.0   # time constant of membrane potential in ms
-CMem   = 250.0  # capacitance of membrane in in pF
-theta  = 20.0   # membrane threshold potential in mV
-neuron_params= {"C_m":        CMem,
-                "tau_m":      tauMem,
-                "tau_syn_ex": tauSyn,
-                "tau_syn_in": tauSyn,
+# PSET.tauSyn = 0.5    # synaptic time constant in ms
+# PSET.tauMem = 20.0   # time constant of membrane potential in ms
+# PSET.CMem   = 250.0  # capacitance of membrane in in pF
+# PSET.theta  = 20.0   # membrane threshold potential in mV
+# PSET.J      = 2.0    # postsyaptic amplitude in mV (before: 0.1)
+
+
+J_unit = ComputePSPnorm(PSET.tauMem, PSET.CMem, PSET.tauSyn) # PSP to current amplitude
+J_ex   = PSET.J / J_unit # amplitude of excitatory postsynaptic current
+J_in   = -PSET.g*J_ex    # amplitude of inhibitory postsynaptic current
+neuron_params= {"C_m":        PSET.CMem,
+                "tau_m":      PSET.tauMem,
+                "tau_syn_ex": PSET.tauSyn,
+                "tau_syn_in": PSET.tauSyn,
                 "t_ref":      2.0,
                 "E_L":        0.0,
                 "V_reset":    0.0,
                 "V_m":        0.0,
-                "V_th":       theta}
-J      = 2.0        # postsyaptic amplitude in mV (before: 0.1)
-J_unit = ComputePSPnorm(tauMem, CMem, tauSyn)
-J_ex   = J / J_unit # amplitude of excitatory postsynaptic current
-J_in   = -g*J_ex    # amplitude of inhibitory postsynaptic current
+                "V_th":       PSET.theta}
 
 '''
 Definition of the threshold rate, which is the external rate needed to fix
@@ -165,8 +186,8 @@ and the rate of the Poisson generator which is multiplied by the
 in-degree CE and converted to Hz by multiplication by 1000.
 '''
 
-nu_th  = (theta * CMem) / (J_ex*CE*exp(1)*tauMem*tauSyn)
-nu_ex  = eta*nu_th
+nu_th  = (PSET.theta * PSET.CMem) / (J_ex*CE*exp(1)*PSET.tauMem*PSET.tauSyn)
+nu_ex  = PSET.eta*nu_th
 p_rate = 1000.0*nu_ex*CE
 
 '''
@@ -186,22 +207,22 @@ Definition of topology-specific parameters. Connection routines use fixed
 indegrees = convergent connections with a fixed number of connections.
 '''
 
-extent_length = 4.   # in mm (layer size = extent_length x extent_length)
-sigma_ex = 0.3       # width of Gaussian profile of excitatory connections
-sigma_in = 0.3       # sigma in mm
+# PSET.extent_length = 4.   # in mm (layer size = extent_length x extent_length)
+# PSET.sigma_ex = 0.3       # width of Gaussian profile of excitatory connections
+# PSET.sigma_in = 0.3       # sigma in mm
 
-pos_ex = list(((random.rand(2*NE) - 0.5) * extent_length).reshape(-1, 2))
-pos_in = list(((random.rand(2*NI) - 0.5) * extent_length).reshape(-1, 2))
+pos_ex = list(((random.rand(2*NE) - 0.5) * PSET.extent_length).reshape(-1, 2))
+pos_in = list(((random.rand(2*NI) - 0.5) * PSET.extent_length).reshape(-1, 2))
 
 layerdict_ex = {
-    'extent' : [extent_length, extent_length],
+    'extent' : [PSET.extent_length, PSET.extent_length],
     'positions' : pos_ex,
     'elements' : 'iaf_psc_alpha',
     'edge_wrap' : True, # PBC
 }
 
 layerdict_in = {
-    'extent' : [extent_length, extent_length],
+    'extent' : [PSET.extent_length, PSET.extent_length],
     'positions' : pos_in,
     'elements' : 'iaf_psc_alpha',
     'edge_wrap' : True,
@@ -213,7 +234,7 @@ density of excitatory neurons. The parrot neurons are placed inside a circle
 around the center of the sheet.
 '''
 
-N_stim = int(NE * np.pi * stim_radius**2 / extent_length**2)
+N_stim = int(NE * np.pi * stim_radius**2 / PSET.extent_length**2)
 
 n_stim = 0
 pos_stim = []
@@ -224,7 +245,7 @@ while n_stim < N_stim:
         n_stim += 1
 
 layerdict_stim = {
-    'extent' : [extent_length, extent_length],
+    'extent' : [PSET.extent_length, PSET.extent_length],
     'positions' : pos_stim,
     'elements' : 'parrot_neuron',
     'edge_wrap' : True,
@@ -248,7 +269,7 @@ conn_dict_ex = {
     'kernel' : {
         'gaussian' : {
             'p_center' : 1.,
-            'sigma' : sigma_ex,
+            'sigma' : PSET.sigma_ex,
             'mean' : 0.,
             'c' : 0.,
             }
@@ -271,7 +292,7 @@ conn_dict_in = {
     'kernel' : {
         'gaussian' : {
             'p_center' : 1.,
-            'sigma' : sigma_in,
+            'sigma' : PSET.sigma_in,
             'mean' : 0.,
             'c' : 0.,
             }
@@ -283,7 +304,7 @@ conn_dict_in = {
 conn_dict_stim = {
     'connection_type': 'divergent',
     'weights' : stim_weight_scale * J_ex,
-    'delays' : dt,
+    'delays' : PSET.dt,
     'mask' : {
         'circular' : {
             'radius' : mask_radius_stim
@@ -298,10 +319,11 @@ conn_dict_stim = {
 Destination for spike output and definition of file prefixes.
 '''
 
-if len(sys.argv) != 2:
-    spike_output_path = 'out_raw'
-else:
-    spike_output_path = sys.argv[-1]
+# if len(sys.argv) != 2:
+#     spike_output_path = 'out_raw'
+# else:
+#     spike_output_path = sys.argv[-1]
+spike_output_path = PSET.spike_output_path
 label = 'spikes' # spike detectors
 label_positions = 'neuron_positions' # neuron positions
 
@@ -325,7 +347,7 @@ total simulation time.
 '''
 
 nest.ResetKernel()
-nest.SetKernelStatus({"resolution": dt,
+nest.SetKernelStatus({"resolution": PSET.dt,
                       "print_time": True,
                       "overwrite_files": True,
                       'local_num_threads': cpu_count(),
@@ -369,7 +391,7 @@ Distribute initial membrane voltages.
 
 for neurons in [nodes_ex, nodes_in]:
     for neuron in neurons:
-        nest.SetStatus([neuron], {'V_m': theta * np.random.rand()})
+        nest.SetStatus([neuron], {'V_m': PSET.theta * np.random.rand()})
 
 '''
 Create spike detectors for recording from the excitatory and the
@@ -386,7 +408,7 @@ nest.SetStatus(espikes,[{
                    "withtime": True,
                    "withgid": True,
                    "to_file": True,
-                   "start" : transient,
+                   "start" : PSET.transient,
                    }])
 
 nest.SetStatus(ispikes,[{
@@ -394,7 +416,7 @@ nest.SetStatus(ispikes,[{
                    "withtime": True,
                    "withgid": True,
                    "to_file": True,
-                   "start" : transient,
+                   "start" : PSET.transient,
                    }])
 
 nest.SetStatus(stim_spikes,[{
@@ -402,7 +424,7 @@ nest.SetStatus(stim_spikes,[{
                    "withtime": True,
                    "withgid": True,
                    "to_file": True,
-                   "start" : transient,
+                   "start" : PSET.transient,
                    }])
 
 noise = nest.Create("poisson_generator", 1, {"rate": p_rate})
@@ -524,7 +546,7 @@ Simulation of the network.
 
 print("Simulating")
 
-nest.Simulate(simtime)
+nest.Simulate(PSET.simtime)
 
 '''
 Storage of the time point after the simulation of the network in a
@@ -548,8 +570,8 @@ inhibitory neurons by the simulation time. The
 multiplication by 1000.0 converts the unit 1/ms to 1/s=Hz.
 '''
 
-rate_ex   = events_ex/(simtime-transient)*1000./len(nodes_ex)
-rate_in   = events_in/(simtime-transient)*1000./len(nodes_in)
+rate_ex   = events_ex/(PSET.simtime-PSET.transient)*1000./len(nodes_ex)
+rate_in   = events_in/(PSET.simtime-PSET.transient)*1000./len(nodes_in)
 
 '''
 Reading out the number of connections established using the excitatory
@@ -691,10 +713,10 @@ config_dict.update({
     "popNum": 3,
     "popNames": ','.join(['EX', 'IN', 'STIM']),
     "spikesFiles": [label+'-%i.gdf' % X for X in [0,1,2]],
-    "timestamps": int(simtime / dt),
-    "resolution": dt,
-    "xSize": extent_length,
-    "ySize": extent_length,
+    "timestamps": int(PSET.simtime / PSET.dt),
+    "resolution": PSET.dt,
+    "xSize": PSET.extent_length,
+    "ySize": PSET.extent_length,
     "dataType": "neuron",
     "posFiles": [label_positions+'-%i.dat' % X for X in [0,1,2]],
     "timelineLength": 100,
@@ -710,7 +732,7 @@ Plotting.
 '''
 
 # network sketch
-if True:
+if False:
     print('Plotting network sketch')
 
     red_conn_dens = 1 # reduce connection density
@@ -898,7 +920,7 @@ if True:
                         sigma = cDict['kernel']['gaussian']['sigma']
                         if 'mask' in cDict.keys():
                             mask = np.sqrt(X**2 + Y**2) <= cDict['mask']['circular']['radius']
-                            weights = cDict['weights']*epsilon
+                            weights = cDict['weights']*PSET.epsilon
                             C[mask] = weights*np.exp(-(X[mask]**2 + Y[mask]**2) / (2*sigma**2)) # / (2*np.pi*sigma**2)
                             if weights > 0:
                                 colors = [(1, 1, 1), (1, 0, 0)]
@@ -968,7 +990,7 @@ if False:
     iraster = nest.raster_plot.from_device(ispikes, hist=True)
 
 # sorted raster plot:
-if True:
+if False:
     print("Plotting sorted raster plot")
 
     plt.rcParams['figure.dpi'] = 160.
@@ -1036,7 +1058,7 @@ if True:
         ax = plt.subplot(gs[:2,:4]) # unsorted
         plot_spikes_all_pop(ax, position_sorted=False)
         ax.axis(ax.axis('tight'))
-        ax.set_xlim(transient, simtime)
+        ax.set_xlim(PSET.transient, PSET.simtime)
         ax.set_xticklabels([])
         ax.set_xlabel('')
         ax.set_ylabel('neuron id')
@@ -1072,7 +1094,7 @@ if True:
         ax = plt.subplot(gs[2:4,:4]) # sorted
         plot_spikes_all_pop(ax, position_sorted=True)
         ax.set_ylabel('x position (mm)')
-        ax.set_xlim(transient, simtime)
+        ax.set_xlim(PSET.transient, PSET.simtime)
         ax.set_xticklabels([])
         ax.text(-0.05, 1.05, 'C', ha='left', fontsize=16, va='bottom',
                 transform=ax.transAxes)
@@ -1100,7 +1122,7 @@ if True:
             ax.hist(xlists[i], bins=bins, histtype='step', color=colors_IES[i],
                     orientation='horizontal', stacked=False, alpha=1,
                     bottom=bottom)
-            ax.plot((bottom, bottom), (-extent_length/2., extent_length/2.),
+            ax.plot((bottom, bottom), (-PSET.extent_length/2., PSET.extent_length/2.),
                     'k', linestyle='--') # dashed line
             h,b = np.histogram(ev, bins)
             bottom += np.max(h)
@@ -1116,20 +1138,20 @@ if True:
 
         # spike count histogram over time
         ax = plt.subplot(gs[4:6, :4])
-        bins = np.arange(transient, simtime+1, 1)
+        bins = np.arange(PSET.transient, PSET.simtime+1, 1)
         bottom = 0
         for i,ev in enumerate([pops['IN']['events']['times'],
                                pops['EX']['events']['times'],
                                pops['STIM']['events']['times']]):
             ax.hist(ev, bins=bins, histtype='step', color=colors_IES[i],
                     stacked=False, alpha=1, bottom=bottom)
-            ax.plot((transient, simtime), (bottom, bottom), 'k',
+            ax.plot((PSET.transient, PSET.simtime), (bottom, bottom), 'k',
                     linestyle='--') # dashed line
             h,b = np.histogram(ev, bins)
             bottom += np.max(h)
 
         ax.set_ylim((0, 1.05*bottom))
-        ax.set_xlim(transient, simtime)
+        ax.set_xlim(PSET.transient, PSET.simtime)
         ax.set_xlabel('time (ms)')
         ax.set_ylabel('count')
         ax.set_title('spike count')

@@ -31,6 +31,17 @@ from nest_preprocessing import *
 
 print('perform spatiotemporal binning of network activity for LFPs')
 
+
+# Capture command line arguments to determine ParameterSet values
+if len(sys.argv) != 3:
+    PSET = parameterset.PSET_DEFAULTS
+    input_path = os.path.join('out_raw', 'PSET_DEFAULTS')
+    output_path = os.path.join('out_proc', 'PSET_DEFAULTS')
+else:
+    input_path = sys.argv[-2]
+    output_path = sys.argv[-1]
+
+
 # input and output path can be provided on the command line:
 #    python fake_LFP_signal.py out_raw out_proc
 # if no argument is given, default values are used
