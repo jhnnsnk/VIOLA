@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 import numpy as np
 import matplotlib.pyplot as plt
-from NeuroTools.parameters import ParameterSet
+from NeuroTools.parameters import ParameterSet, ParameterSpace
 import parameterset
 import nest_preprocessing as npp
 import os
 import h5py
 import scipy.sparse as sp
 from matplotlib.animation import FuncAnimation
+from copy import copy
 
 
 def get_network_analysis_object(parameter_set_file, ps_id,
@@ -73,13 +74,11 @@ def load_analysis_dict(subParamSpace):
 def print_subspace_ID_overview(ANALYSIS, subParamSpace, subspace,
                                dim0str, dim0, dim1, dim2,
                                keys=['PSP_e', 'g'], titlekey='conn_profile',
-                               dirname='figures'):
+                               fname='ps_overview.txt'):
     '''
     Print text overview of parameter combination IDs to
     file and screen
     '''
-    fname = os.path.join(dirname, 'ID_overview_{0}_{1}_{2}_vs_{3}.txt'.format(
-                        dim0str, dim0, dim1, dim2))
     f = file(fname, 'w')
 
     #print header
@@ -141,96 +140,105 @@ if __name__ == '__main__':
     plt.close('all')
 
     #time window time series
-    T = (250, 400)
+    T = (200, 400)
 
-    variables = [['sigma_ex', 'eta', 'J']] #last dim is fixed (PSET_DEFAULTS)
-    # variables = [['g', 'eta', 'J']] #last dim is fixed (PSET_DEFAULTS)
+    variables = [['sigma_ex', 'g', 'eta']] # dim 1 and 2 iterable,
+                                           # dim 3 is fixed or iterable
 
     for dim1, dim2, dim3 in variables:
-
-        #look at some specific subspace (g, PSP_e, conn_profiles)
-        #crossref corresponding parameterspace
-        PS = parameterset.PS
-        subspace = {
-            dim1 : getattr(PS, dim1),
-            dim2 : getattr(PS, dim2),
-            dim3 : getattr(PS, dim3),
-        }
-
-        subParamSpace = PS
-
-        #load analysis objects
-        ANALYSIS = load_analysis_dict(subParamSpace)
-
-        #print out parameter space ids
-        print_subspace_ID_overview(ANALYSIS, subParamSpace, subspace,
-                                   'epsilon', PS.epsilon,
-                                   dim1, dim2,
-                                   keys = [dim1, dim2],
-                                   titlekey = dim3,
-                                   dirname='.',
-                                )
-
-
-        nrows = len(getattr(PS, dim1))
-        ncols = len(getattr(PS, dim2))
-
-        fig, axes = plt.subplots(nrows, ncols, figsize=(nrows*3, ncols*3))
-
-            
-        TSTEP = 0
-        datas = []
-        images = []
-        
-        for i, value_i in enumerate(subParamSpace[dim1]):
-            for j, value_j in enumerate(subParamSpace[dim2]):
-
-                paramset = subParamSpace.copy()
-                paramset[dim1] = value_i
-                paramset[dim2] = value_j
-                paramset[dim3] = subspace[dim3]
-                ps_id = parameterset.get_unique_id(paramset)
-                print(ps_id)
-
-                A = ANALYSIS[ps_id]
-                
-                X = 'EX'
-                f = h5py.File(os.path.join(A.output_path, 'all_binned_sprates_rs.h5'))
-                data = load_h5_to_sparse(X, f).todense()
-                data = np.array(data).reshape((A.pos_bins.size-1, -1, data.shape[1]))
-                datas.append(data)
-                f.close()
-                
-                im = axes[i, j].pcolormesh(A.pos_bins, A.pos_bins,
-                                   data[:, :, TSTEP],
-                                   vmin=0., vmax=500., cmap='gray')
-                
-                axes[i, j].set_xticklabels([])
-                axes[i, j].set_yticklabels([])
-                axes[i, j].axis(axes[i, j].axis('tight'))
-                axes[i, j].set_title('{}={}, {}={}'.format(dim1, value_i, dim2, value_j))
-
-                
-                images.append(im)
-
-        dt = A.BINSIZE_TIME
-        tbins = np.arange(T[0]/dt, (T[1]+dt)/dt).astype(int)
-        
-
-        def init():
-            return
-        
-        def update(frame_number):
-            '''update function for animation'''
-            TSTEP = frame_number % (tbins.size-1) + int(T[0] / dt)
-            fig.suptitle('t=%.3i ms' % int(tbins[frame_number % (tbins.size-1)]*dt))
-            for i, (data, im) in enumerate(zip(datas, images)):
-                im.set_array(data[:, :, TSTEP].flatten())
-    
-        ani = FuncAnimation(fig=fig, func=update, init_func=init,
-                            frames=tbins.size, interval=50)
-        ani.save('parametertest_animation.mp4', fps=10, writer='ffmpeg',
-                 extra_args=['-b:v', '20000k', '-r', '10', '-vcodec', 'mpeg4'],)
-
-        plt.close(fig)
+        # top level iterable is dim3
+        for value_h in getattr(parameterset.PS, dim3): 
+             # define subparameterspace as PS can be N-dimensional
+             subspace = {
+                 dim1 : getattr(parameterset.PS, dim1),
+                 dim2 : getattr(parameterset.PS, dim2),
+                 dim3 : value_h
+             }
+             subParamSpace = ParameterSpace(PSET_DEFAULTS.copy())
+             subParamSpace.update(subspace)
+             
+             
+             #load analysis objects
+             ANALYSIS = load_analysis_dict(subParamSpace)
+     
+             #print out parameter space ids
+             fname = 'ps_output_{}_vs_{}_vs_{}_{}.txt'.format(
+                          dim1, dim2, dim3, value_h)
+             print_subspace_ID_overview(ANALYSIS, subParamSpace, subspace,
+                                        dim3, subParamSpace.epsilon,
+                                        dim1, dim2,
+                                        keys = [dim1, dim2],
+                                        titlekey=dim3,
+                                        fname=fname,
+                                     )
+     
+     
+             nrows = len(getattr(subParamSpace, dim1))
+             ncols = len(getattr(subParamSpace, dim2))
+     
+             fig, axes = plt.subplots(nrows, ncols, figsize=(nrows*3, ncols*3))
+             fig.subplots_adjust(hspace=0.01, wspace=0.01)
+             
+                 
+             TSTEP = 0
+             datas = []
+             images = []
+             
+             for i, value_i in enumerate(subParamSpace[dim1]):
+                 for j, value_j in enumerate(subParamSpace[dim2]):
+     
+                     paramset = PSET_DEFAULTS.copy()
+                     paramset[dim1] = value_i
+                     paramset[dim2] = value_j
+                     paramset[dim3] = subspace[dim3]
+                     ps_id = parameterset.get_unique_id(paramset)
+                     print(ps_id)
+     
+                     A = ANALYSIS[ps_id]
+                     
+                     X = 'EX'
+                     f = h5py.File(os.path.join(A.output_path, 'all_binned_sprates_rs.h5'))
+                     data = load_h5_to_sparse(X, f).todense()
+                     data = np.array(data).reshape((A.pos_bins.size-1, -1, data.shape[1]))
+                     datas.append(data)
+                     f.close()
+                     
+                     im = axes[i, j].pcolormesh(A.pos_bins, A.pos_bins,
+                                        data[:, :, TSTEP],
+                                        vmin=0., vmax=500., cmap='gray')
+                     
+                     axes[i, j].set_xticklabels([])
+                     axes[i, j].set_yticklabels([])
+                     axes[i, j].axis(axes[i, j].axis('tight'))
+                     # axes[i, j].set_title('{}={}, {}={}'.format(dim1, value_i, dim2, value_j))
+                     if j == 0:
+                         axes[i, j].set_ylabel('{}={}'.format(dim1, value_i))
+                     if i == 0:
+                         axes[i, j].set_title('{}={}'.format(dim2, value_j))
+     
+                     
+                     images.append(im)
+     
+             dt = A.BINSIZE_TIME
+             tbins = np.arange(T[0]/dt, (T[1]+dt)/dt).astype(int)
+             
+     
+             def init():
+                 return
+             
+             def update(frame_number):
+                 '''update function for animation'''
+                 TSTEP = frame_number % (tbins.size-1) + int(T[0] / dt)
+                 fig.suptitle('{}={}, '.format(dim3, value_h) + 't=%.3i ms' % int(tbins[frame_number % (tbins.size-1)]*dt))
+                 for i, (data, im) in enumerate(zip(datas, images)):
+                     im.set_array(data[:, :, TSTEP].flatten())
+         
+             ani = FuncAnimation(fig=fig, func=update, init_func=init,
+                                 frames=tbins.size, interval=50)
+             ani.save('ps_output_{}_vs_{}_vs_{}_{}.mp4'.format(
+                          dim1, dim2, dim3, value_h),
+                      fps=10, writer='ffmpeg',
+                      extra_args=['-b:v', '20000k', '-r', '10', '-vcodec', 'mpeg4'],)
+     
+             plt.close(fig)
         # plt.show()

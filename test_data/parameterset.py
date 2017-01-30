@@ -15,9 +15,9 @@ PSET_DEFAULTS = ps.ParameterSet(dict(
     
     g       = 4.5,  # ratio inhibitory weight/excitatory weight (before: 5.0)
     eta     = 2.0,  # external rate relative to threshold rate
-    epsilon = 0.2,  # connection probability (before: 0.1)
+    epsilon = 0.1,  # connection probability (before: 0.1)
     
-    order = 5000,    # network scaling factor 
+    order = 10000,    # network scaling factor 
     
     tauSyn = 0.5,    # synaptic time constant in ms
     tauMem = 20.0,   # time constant of membrane potential in ms
@@ -33,10 +33,10 @@ PSET_DEFAULTS = ps.ParameterSet(dict(
 # define parameterspace to iterate over
 PS = ps.ParameterSpace(PSET_DEFAULTS)
 PS.update(dict(
-    g = ps.ParameterRange(np.linspace(3., 7., 5)),
-    sigma_ex = ps.ParameterRange((np.linspace(0.2, 0.6, 5))),
-    # eta = ps.ParameterRange(np.linspace(1., 2., 3)),
-    
+    g = ps.ParameterRange(np.linspace(4., 5., 5)),
+    sigma_ex = ps.ParameterRange((np.linspace(0.2, 0.4, 5))),
+    eta = ps.ParameterRange(np.linspace(0., 2., 5)),
+    # J = ps.ParameterRange(np.linspace(0.5, 2.5, 5)),    
 ))
 
 
@@ -160,7 +160,7 @@ python fake_LFP_signal.py %s %s
 '''
 
             # set up jobscript
-            wt = '0:10:00'
+            wt = '0:15:00'
             lnodes = 1
             ppn = 48
             jobscript = jobscript_skeleton % (ps_id,
