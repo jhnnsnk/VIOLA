@@ -210,7 +210,6 @@ if __name__ == '__main__':
                      axes[i, j].set_xticklabels([])
                      axes[i, j].set_yticklabels([])
                      axes[i, j].axis(axes[i, j].axis('tight'))
-                     # axes[i, j].set_title('{}={}, {}={}'.format(dim1, value_i, dim2, value_j))
                      if j == 0:
                          axes[i, j].set_ylabel('{}={}'.format(dim1, value_i))
                      if i == 0:
@@ -241,4 +240,3 @@ if __name__ == '__main__':
                       extra_args=['-b:v', '20000k', '-r', '10', '-vcodec', 'mpeg4'],)
      
              plt.close(fig)
-        # plt.show()
