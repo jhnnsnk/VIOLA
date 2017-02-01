@@ -23,11 +23,15 @@ PSET_DEFAULTS = ps.ParameterSet(dict(
     tauMem = 20.0,   # time constant of membrane potential in ms
     CMem   = 250.0,  # capacitance of membrane in in pF
     theta  = 20.0,   # membrane threshold potential in mV
-    J      = 2.0,    # postsyaptic amplitude in mV (before: 0.1)
+    J      = 0.5,    # postsyaptic amplitude in mV (before: 0.1)
     
     extent_length = 4.,   # in mm (layer size = extent_length x extent_length)
     sigma_ex = 0.3,       # width of Gaussian profile of excitatory connections
     sigma_in = 0.3,       # sigma in mm
+
+    c_EX = .3,      # constant term for linear distance-dependent delay,
+    a_EX = 0.7,      # propagation velocity for linear delay param, p(d)=c+a*d
+
 ))
 
 # define parameterspace to iterate over
@@ -35,8 +39,8 @@ PS = ps.ParameterSpace(PSET_DEFAULTS)
 PS.update(dict(
     g = ps.ParameterRange(np.linspace(4., 5., 5)),
     sigma_ex = ps.ParameterRange((np.linspace(0.2, 0.4, 5))),
-    eta = ps.ParameterRange(np.linspace(0., 2., 5)),
-    # J = ps.ParameterRange(np.linspace(0.5, 2.5, 5)),    
+    # eta = ps.ParameterRange(np.linspace(0., 2., 5)),
+    J = ps.ParameterRange(np.linspace(0.1, 1.1, 5)),    
 ))
 
 

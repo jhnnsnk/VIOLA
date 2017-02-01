@@ -140,9 +140,9 @@ if __name__ == '__main__':
     plt.close('all')
 
     #time window time series
-    T = (200, 400)
+    T = (200, 600)
 
-    variables = [['sigma_ex', 'g', 'eta']] # dim 1 and 2 iterable,
+    variables = [['sigma_ex', 'J', 'g']] # dim 1 and 2 iterable,
                                            # dim 3 is fixed or iterable
 
     for dim1, dim2, dim3 in variables:

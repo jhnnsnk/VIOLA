@@ -261,9 +261,11 @@ conn_dict_ex = {
     'allow_multapses': True,
     'weights' : J_ex,
     'delays' : {
-        'linear' : {
-            'c' : 1.,
-            'a' : 7.,
+        'linear' : { # p(d) = c + a * d, d is distance
+            'c' : PSET.c_EX, #0.1,
+            'a' : PSET.a_EX, #0.1,
+            # 'c' : 1.,
+            # 'a' : 7.,
             }
         },
     'kernel' : {
@@ -284,10 +286,13 @@ conn_dict_in = {
     'allow_multapses': True,
     'weights' : J_in,
     'delays' : {
-        'linear' : {
-            'c' : 1.,
-            'a' : 7.,
-            }
+        'constant' : {
+            'value' : 1.
+        }
+        # 'linear' : {
+        #     'c' : 1.,
+        #     'a' : 7.,
+        #     }
         },
     'kernel' : {
         'gaussian' : {
