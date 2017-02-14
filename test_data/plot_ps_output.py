@@ -141,8 +141,10 @@ if __name__ == '__main__':
 
     #time window time series
     T = (200, 600)
-
-    variables = [['sigma_ex', 'J', 'g']] # dim 1 and 2 iterable,
+    #var = ['sigma_ex', 'J', 'g']
+    var = ['num_stim_conn', 'stim_rate', 'stim_radius']
+    #var = ['num_stim_conn', 'stim_rate', 'stim_weight_scale']
+    variables = [var] # dim 1 and 2 iterable,
                                            # dim 3 is fixed or iterable
 
     for dim1, dim2, dim3 in variables:
@@ -177,6 +179,11 @@ if __name__ == '__main__':
              ncols = len(getattr(subParamSpace, dim2))
      
              fig, axes = plt.subplots(nrows, ncols, figsize=(nrows*3, ncols*3))
+             if nrows==1 and ncols==1:
+                 axes = np.array([[axes]])
+             elif nrows==1 or ncols==1:
+                 axes = np.array([axes])
+                
              fig.subplots_adjust(hspace=0.01, wspace=0.01)
              
                  
@@ -203,7 +210,7 @@ if __name__ == '__main__':
                      datas.append(data)
                      f.close()
                      
-                     im = axes[i, j].pcolormesh(A.pos_bins, A.pos_bins,
+                     im = axes[i,j].pcolormesh(A.pos_bins, A.pos_bins,
                                         data[:, :, TSTEP],
                                         vmin=0., vmax=500., cmap='gray')
                      

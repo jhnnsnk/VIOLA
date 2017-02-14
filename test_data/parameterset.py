@@ -10,10 +10,10 @@ import operator
 
 PSET_DEFAULTS = ps.ParameterSet(dict(
     dt        = 0.1,    # Simulation time resolution in ms
-    simtime   = 1000.,  # Simulation time in ms
-    transient = 200., # Simulation transient, discarding spikes at times < transient 
+    simtime   = 2000.,  # Simulation time in ms
+    transient = 500., # Simulation transient, discarding spikes at times < transient 
     
-    g       = 4.5,  # ratio inhibitory weight/excitatory weight (before: 5.0)
+    g       = 4.,  # ratio inhibitory weight/excitatory weight (before: 5.0)
     eta     = 2.0,  # external rate relative to threshold rate
     epsilon = 0.1,  # connection probability (before: 0.1)
     
@@ -23,24 +23,56 @@ PSET_DEFAULTS = ps.ParameterSet(dict(
     tauMem = 20.0,   # time constant of membrane potential in ms
     CMem   = 250.0,  # capacitance of membrane in in pF
     theta  = 20.0,   # membrane threshold potential in mV
-    J      = 0.5,    # postsyaptic amplitude in mV (before: 0.1)
+    J      = 0.6,    # postsyaptic amplitude in mV (before: 0.1)
     
     extent_length = 4.,   # in mm (layer size = extent_length x extent_length)
-    sigma_ex = 0.3,       # width of Gaussian profile of excitatory connections
+    sigma_ex = 0.25,       # width of Gaussian profile of excitatory connections
     sigma_in = 0.3,       # sigma in mm
 
-    c_EX = .3,      # constant term for linear distance-dependent delay,
+    c_EX = 0.3,      # constant term for linear distance-dependent delay,
     a_EX = 0.7,      # propagation velocity for linear delay param, p(d)=c+a*d
+
+    stim_duration = 50., # duration of stimulus onset in ms
+    stim_radius = 0.2, # radius of a circle in mm for location of stimulus
+    num_stim_conn = 100, # number of connections inside mask_radius_conn
+    stim_rate = 6000., # rate of parrot neurons in Hz during stimulus activation
+
+    #stim_weight_scale = 10., # multiplied with J_ex for stimulus
 
 ))
 
 # define parameterspace to iterate over
 PS = ps.ParameterSpace(PSET_DEFAULTS)
+#PS.update(dict(
+#   g = ps.ParameterRange([4.]), #np.linspace(4., 5., 5)),
+#   sigma_ex = ps.ParameterRange([0.25]),#(np.linspace(0.2, 0.4, 5))),
+#   J = ps.ParameterRange([0.6]),#np.linspace(0.1, 1.1, 5)),    
+#))
+
+#PS.update(dict(
+#    num_stim_conn = ps.ParameterRange([100., 200.]),
+#    stim_rate = ps.ParameterRange([100., 200., 400.]),
+#    stim_weight_scale = ps.ParameterRange([2., 5., 10., 20.]),
+#))
+
+# 02_out
+# PS.update(dict(
+#     sigma_in = ps.ParameterRange(np.linspace(0.1, 0.5, 3)),
+#     sigma_ex = ps.ParameterRange(np.linspace(0.1, 0.5, 3)),
+#     J = ps.ParameterRange(np.linspace(0.1, 0.7, 3)),
+# ))
+
+# 03_out
+# PS.update(dict(
+#     a_EX = ps.ParameterRange(np.linspace(0.5, 0.7, 3)),
+#     sigma_ex = ps.ParameterRange(np.linspace(0.2, 0.4, 5)),
+#     J = ps.ParameterRange(np.linspace(0.4, 0.8, 5)),    
+# ))
+
 PS.update(dict(
-    g = ps.ParameterRange([4.]),
-    # g = ps.ParameterRange(np.linspace(4., 5., 5)),
-    sigma_ex = ps.ParameterRange((np.linspace(0.2, 0.4, 5))),
-    J = ps.ParameterRange(np.linspace(0.1, 1.1, 5)),    
+    stim_radius = ps.ParameterRange([0.2]),#np.linspace(0.1, 0.3, 3)),
+    num_stim_conn = ps.ParameterRange([100]),#np.linspace(100, 1000, 3))),
+    stim_rate = ps.ParameterRange([6000.]),#np.linspace(3000., 8000., 3)),    
 ))
 
 
@@ -158,13 +190,13 @@ if __name__ == '__main__':
 #SBATCH -N %i
 #SBATCH --cpus-per-task %i
 #SBATCH --exclusive
-python topo_brunel_alpha_nest.py %s
+python topo_brunel_alpha_nest_stim.py %s
 python nest_preprocessing.py %s %s
 python fake_LFP_signal.py %s %s
 '''
 
             # set up jobscript
-            wt = '0:15:00'
+            wt = '0:30:00'
             lnodes = 1
             ppn = 48
             jobscript = jobscript_skeleton % (ps_id,
