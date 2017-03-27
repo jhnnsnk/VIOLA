@@ -194,7 +194,7 @@ Parameters for a spatially confined stimulus.
 stim_radius = PSET.stim_radius#0.2      # radius of a circle in mm for location of stimulus
 mask_radius_stim = 0.1#0.3  # mask radius of stimulus in mm around each parrot neuron
 num_stim_conn = PSET.num_stim_conn#100     # number of connections inside mask_radius_conn
-stim_start = 1000.       # start time of stimulus in ms
+stim_start = PSET.stim_start       # start time of stimulus in ms
 #stim_stop = 550.        # stop time of stimulus in ms
 stim_stop = stim_start + PSET.stim_duration
 stim_rate = PSET.stim_rate#200.        # rate of parrot neurons in Hz during stimulus activation
@@ -240,6 +240,7 @@ pos_stim = []
 for pos in pos_stim_square:
     if pos[0]**2 + pos[1]**2 <= stim_radius**2:
         pos_stim.append(pos)
+N_stim = len(pos_stim)
 
 layerdict_stim = {
     'extent' : [PSET.extent_length, PSET.extent_length],
@@ -350,7 +351,7 @@ total simulation time.
 print 'starting nest now'
 nest.ResetKernel()
 nest.SetKernelStatus({"resolution": PSET.dt,
-                      "print_time": True,
+                      "print_time": False,
                       "overwrite_files": True,
                       'local_num_threads': cpu_count(),
                       'grng_seed': 234567})
@@ -734,7 +735,7 @@ Plotting.
 '''
 
 # network sketch
-if False:
+if True:
     print('Plotting network sketch')
 
     red_conn_dens = 1 # reduce connection density
@@ -986,13 +987,13 @@ if False:
 
 
 # rasters and histograms from nest
-if False:
+if True:
     print('Plotting raster plot using NEST')
     eraster = nest.raster_plot.from_device(espikes, hist=True)
     iraster = nest.raster_plot.from_device(ispikes, hist=True)
 
 # sorted raster plot:
-if False:
+if True:
     print("Plotting sorted raster plot")
 
     plt.rcParams['figure.dpi'] = 160.

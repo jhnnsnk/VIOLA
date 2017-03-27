@@ -32,12 +32,11 @@ PSET_DEFAULTS = ps.ParameterSet(dict(
     c_EX = 0.3,      # constant term for linear distance-dependent delay,
     a_EX = 0.7,      # propagation velocity for linear delay param, p(d)=c+a*d
 
-    stim_duration = 50., # duration of stimulus onset in ms
+    stim_start = 1650., # start times for the stimulus
+    stim_duration = 5., # duration of stimulus onset in ms
     stim_radius = 0.2, # radius of a circle in mm for location of stimulus
     num_stim_conn = 100, # number of connections inside mask_radius_conn
-    stim_rate = 6000., # rate of parrot neurons in Hz during stimulus activation
-
-    #stim_weight_scale = 10., # multiplied with J_ex for stimulus
+    stim_rate = 5000., # rate of parrot neurons in Hz during stimulus activation
 
 ))
 
@@ -69,10 +68,16 @@ PS = ps.ParameterSpace(PSET_DEFAULTS)
 #     J = ps.ParameterRange(np.linspace(0.4, 0.8, 5)),    
 # ))
 
+# PS.update(dict(
+#     stim_radius = ps.ParameterRange([0.2]),#np.linspace(0.1, 0.3, 3)),
+#     num_stim_conn = ps.ParameterRange([100]),#np.linspace(100, 1000, 3))),
+#     stim_rate = ps.ParameterRange([6000.]),#np.linspace(3000., 8000., 3)),    
+# ))
+
 PS.update(dict(
     stim_radius = ps.ParameterRange([0.2]),#np.linspace(0.1, 0.3, 3)),
-    num_stim_conn = ps.ParameterRange([100]),#np.linspace(100, 1000, 3))),
-    stim_rate = ps.ParameterRange([6000.]),#np.linspace(3000., 8000., 3)),    
+    stim_starts = ps.ParameterRange([[1650.]]),
+    stim_rate = ps.ParameterRange([5000.]),#np.linspace(3000., 8000., 3)),    
 ))
 
 

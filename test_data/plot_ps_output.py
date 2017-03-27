@@ -140,9 +140,10 @@ if __name__ == '__main__':
     plt.close('all')
 
     #time window time series
-    T = (200, 600)
+    #T = (200, 600)
+    T = (1000, 1500)
     #var = ['sigma_ex', 'J', 'g']
-    var = ['num_stim_conn', 'stim_rate', 'stim_radius']
+    var = ['stim_rate', 'stim_radius', 'stim_starts']
     #var = ['num_stim_conn', 'stim_rate', 'stim_weight_scale']
     variables = [var] # dim 1 and 2 iterable,
                                            # dim 3 is fixed or iterable
