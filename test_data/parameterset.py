@@ -17,7 +17,7 @@ PSET_DEFAULTS = ps.ParameterSet(dict(
     eta     = 2.0,  # external rate relative to threshold rate
     epsilon = 0.1,  # connection probability (before: 0.1)
     
-    order = 10000,    # network scaling factor 
+    order = 5000,    # network scaling factor 
     
     tauSyn = 0.5,    # synaptic time constant in ms
     tauMem = 20.0,   # time constant of membrane potential in ms

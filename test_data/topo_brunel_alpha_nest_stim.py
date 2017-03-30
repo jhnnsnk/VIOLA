@@ -137,7 +137,6 @@ of the neurons.
 Definition of the number of neurons in the network.
 '''
 
-PSET.order = 5000
 NE         = 4*PSET.order # number of excitatory neurons
 NI         = 1*PSET.order # number of inhibitory neurons
 N_neurons  = NE+NI   # number of neurons in total
