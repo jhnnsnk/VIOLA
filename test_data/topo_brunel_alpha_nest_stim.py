@@ -41,6 +41,9 @@ Usage:
 Importing all necessary modules for simulation, analysis and plotting.
 '''
 
+import matplotlib
+matplotlib.use('Agg')
+
 from scipy.optimize import fsolve
 
 import nest
@@ -232,7 +235,7 @@ around the center of the sheet.
 '''
 
 N_stim_square = int(NE * (2.*stim_radius)**2/PSET.extent_length**2)
-pos_stim_square = list(((random.rand(2*N_stim_square) - 0.5) * stim_radius).reshape(-1, 2))
+pos_stim_square = list(((random.rand(2*N_stim_square) - 0.5) * 2.*stim_radius).reshape(-1, 2))
 
 # discard those positions which do not fall into circle
 pos_stim = []
@@ -259,10 +262,8 @@ conn_dict_ex = {
     'weights' : J_ex,
     'delays' : {
         'linear' : { # p(d) = c + a * d, d is distance
-            'c' : PSET.c_EX, #0.1,
-            'a' : PSET.a_EX, #0.1,
-            # 'c' : 1.,
-            # 'a' : 7.,
+            'c' : PSET.c_EX,
+            'a' : PSET.a_EX,
             }
         },
     'kernel' : {
@@ -273,7 +274,6 @@ conn_dict_ex = {
             'c' : 0.,
             }
         },
-    'mask' : {'circular' : {'radius' : 2.} },
     'number_of_connections' : CE,
     }
 
@@ -283,13 +283,10 @@ conn_dict_in = {
     'allow_multapses': True,
     'weights' : J_in,
     'delays' : {
-        'constant' : {
-            'value' : 1.
-        }
-        # 'linear' : {
-        #     'c' : 1.,
-        #     'a' : 7.,
-        #     }
+        'linear' : {
+            'c' : PSET.c_IN,
+            'a' : PSET.a_IN,
+            }
         },
     'kernel' : {
         'gaussian' : {
@@ -299,13 +296,12 @@ conn_dict_in = {
             'c' : 0.,
             }
         },
-    'mask' : {'circular' : {'radius' : 2.} },
     'number_of_connections' : CI,
     }
 
 conn_dict_stim = {
     'connection_type': 'divergent',
-    'weights' : J_ex, #stim_weight_scale * J_ex,
+    'weights' : J_ex,
     'delays' : PSET.dt,
     'mask' : {
         'circular' : {
@@ -734,7 +730,7 @@ Plotting.
 '''
 
 # network sketch
-if True:
+if False:
     print('Plotting network sketch')
 
     red_conn_dens = 1 # reduce connection density
