@@ -30,55 +30,86 @@ PSET_DEFAULTS = ps.ParameterSet(dict(
     sigma_in = 0.3,       # sigma in mm
 
     c_EX = 0.3,      # constant term for linear distance-dependent delay,
-    a_EX = 0.7,      # propagation velocity for linear delay param, p(d)=c+a*d
+    a_EX = 0.7,      # inverse propagation velocity for linear delay param, p(d)=c+a*d
 
-    stim_start = 1650., # start times for the stimulus
-    stim_duration = 5., # duration of stimulus onset in ms
-    stim_radius = 0.2, # radius of a circle in mm for location of stimulus
-    num_stim_conn = 100, # number of connections inside mask_radius_conn
-    stim_rate = 5000., # rate of parrot neurons in Hz during stimulus activation
+    c_IN = 0.3,      #inhibitory 
+    a_IN = 0.7,
+
+    stim_start = 1000.,# start times for the stimulus
+    stim_duration = 50., # duration of stimulus onset in ms
+    stim_radius = 0.5, # radius of a circle in mm for location of stimulus
+    num_stim_conn = 30, # number of connections inside mask_radius_conn
+    stim_rate = 200., # rate of parrot neurons in Hz during stimulus activation
 
 ))
 
 # define parameterspace to iterate over
+
+# main test data: "interesting state"
 PS = ps.ParameterSpace(PSET_DEFAULTS)
-#PS.update(dict(
-#   g = ps.ParameterRange([4.]), #np.linspace(4., 5., 5)),
-#   sigma_ex = ps.ParameterRange([0.25]),#(np.linspace(0.2, 0.4, 5))),
-#   J = ps.ParameterRange([0.6]),#np.linspace(0.1, 1.1, 5)),    
-#))
 
-#PS.update(dict(
-#    num_stim_conn = ps.ParameterRange([100., 200.]),
-#    stim_rate = ps.ParameterRange([100., 200., 400.]),
-#    stim_weight_scale = ps.ParameterRange([2., 5., 10., 20.]),
-#))
-
-# 02_out
+# #non-stationary patterns (main)
 # PS.update(dict(
-#     sigma_in = ps.ParameterRange(np.linspace(0.1, 0.5, 3)),
-#     sigma_ex = ps.ParameterRange(np.linspace(0.1, 0.5, 3)),
-#     J = ps.ParameterRange(np.linspace(0.1, 0.7, 3)),
+#     g = 4.,
+#     c_EX = 0.3,
+#     a_EX = 0.7,
+#     c_IN = 1.,
+#     a_IN = 0.,
+#     sigma_ex = 0.25,
+#     sigma_in = 0.3,
 # ))
 
-# 03_out
-# PS.update(dict(
-#     a_EX = ps.ParameterRange(np.linspace(0.5, 0.7, 3)),
-#     sigma_ex = ps.ParameterRange(np.linspace(0.2, 0.4, 5)),
-#     J = ps.ParameterRange(np.linspace(0.4, 0.8, 5)),    
-# ))
-
-# PS.update(dict(
-#     stim_radius = ps.ParameterRange([0.2]),#np.linspace(0.1, 0.3, 3)),
-#     num_stim_conn = ps.ParameterRange([100]),#np.linspace(100, 1000, 3))),
-#     stim_rate = ps.ParameterRange([6000.]),#np.linspace(3000., 8000., 3)),    
-# ))
-
+# stationary patterns
 PS.update(dict(
-    stim_radius = ps.ParameterRange([0.2]),#np.linspace(0.1, 0.3, 3)),
-    stim_starts = ps.ParameterRange([[1650.]]),
-    stim_rate = ps.ParameterRange([5000.]),#np.linspace(3000., 8000., 3)),    
+    g = 10.,
+    c_EX = 0.1,
+    a_EX = 0.,
+    c_IN = 0.1,
+    a_IN = 0.,
+    sigma_ex = 0.1,#ps.ParameterRange([0.1, 0.2, 0.3., 0.4]),
+    sigma_in = 0.3,#ps.ParameterRange([0.1, 0.2, 0.3, 0.4]),
 ))
+
+# # AI
+# PS.update(dict(
+#     g = 5.
+#     c_EX = 0.3,
+#     a_EX = 0.7,
+#     c_IN = 0.3,
+#     a_IN = 0.7,
+#     sigma_ex = 0.7,
+#     sigma_in = 0.7,
+# ))
+
+
+# # oscillations
+# PS.update(dict(
+#    g = 5.,
+#    c_EX = 3.,
+#    a_EX = 0.,
+#    c_IN = 3.,
+#    a_IN = 0.,
+#    sigma_ex = 0.7,
+#    simga_in = 0.7,
+# ))
+
+
+
+
+# # brunel
+# PS.update(dict(
+#     g = ps.ParameterRange([4., 5.]),
+#     J = ps.ParameterRange([0.6]),
+#     eta = ps.ParameterRange([2.]),
+# ))
+
+# # brunel
+# PS.update(dict(
+#     g = ps.ParameterRange([5.]),
+#     num_stim_conn = ps.ParameterRange([20, 40]),
+#     stim_rate = ps.ParameterRange([200.]),
+#     stim_duration = ps.ParameterRange([50.])
+# ))
 
 
 def sort_deep_dict(d):
